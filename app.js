@@ -112,7 +112,10 @@ function handleDateChange() {
 
 function loadDailyData() {
     const key = formatDateKey(currentDate);
-    const data = cycleData[key] || { bleeding: 'none', mucus: 'none', bbt: '' };
+    let data = cycleData[key] || { bleeding: 'unknown', mucus: 'unknown', bbt: '' };
+
+    // Migrate old mucus values if necessary
+    data.mucus = migrateMucusValue(data.mucus);
 
     // Set Bleeding
     setButtonGroupValue(bleedingGroup, data.bleeding);
@@ -141,7 +144,18 @@ function setButtonGroupValue(groupElement, value) {
 
 function getButtonGroupValue(groupElement) {
     const activeBtn = groupElement.querySelector('.option-btn.active');
-    return activeBtn ? activeBtn.dataset.value : 'none';
+    return activeBtn ? activeBtn.dataset.value : 'unknown';
+}
+
+function migrateMucusValue(value) {
+    const mapping = {
+        'none': 'dry',
+        'sticky': 'damp',
+        'creamy': 'damp',
+        'watery': 'slippery',
+        'eggwhite': 'slippery'
+    };
+    return mapping[value] || value;
 }
 
 function saveDailyData() {
@@ -159,14 +173,17 @@ function saveDailyData() {
     }
 
     // Validate enums to prevent garbage data
-    const validBleeding = ['none', 'spotting', 'light', 'medium', 'heavy'];
-    const validMucus = ['none', 'sticky', 'creamy', 'watery', 'eggwhite'];
+    const validBleeding = ['unknown', 'none', 'spotting', 'light', 'medium', 'heavy'];
+    const validMucus = ['unknown', 'dry', 'damp', 'slippery'];
     
-    const bleeding = validBleeding.includes(bleedingVal) ? bleedingVal : 'none';
-    const mucus = validMucus.includes(mucusVal) ? mucusVal : 'none';
+    const bleeding = validBleeding.includes(bleedingVal) ? bleedingVal : 'unknown';
+    const mucus = validMucus.includes(mucusVal) ? mucusVal : 'unknown';
 
-    // If all data is empty/none, delete the entry entirely so it doesn't affect cycle starts
-    if (bleeding === 'none' && mucus === 'none' && bbtVal === null) {
+    // If all data is empty/none or unknown, delete the entry entirely so it doesn't affect cycle starts
+    const isBleedingEmpty = bleeding === 'none' || bleeding === 'unknown';
+    const isMucusEmpty = mucus === 'dry' || mucus === 'unknown';
+
+    if (isBleedingEmpty && isMucusEmpty && bbtVal === null) {
         delete cycleData[key];
         showToast('Entry Cleared');
     } else {
@@ -242,11 +259,26 @@ function analyzeCycle() {
     let isPotentiallyFertile = false;
     let ovulationConfirmed = checkBBTShift(datesUpToCurrent);
     
-    // Check Mucus for fertility
-    if (['watery', 'eggwhite'].includes(todayData.mucus)) {
-        isHighlyFertile = true;
-    } else if (['sticky', 'creamy'].includes(todayData.mucus)) {
-        isPotentiallyFertile = true;
+    // Lookback logic: Check for fertile mucus in the last 3 days
+    let lastSlipperyKey = null;
+    let lastDampKey = null;
+
+    datesUpToCurrent.forEach(dateKey => {
+        const data = cycleData[dateKey] || { mucus: 'unknown' };
+        if (data.mucus === 'slippery') lastSlipperyKey = dateKey;
+        if (data.mucus === 'damp') lastDampKey = dateKey;
+    });
+
+    if (lastSlipperyKey) {
+        const lastMs = new Date(lastSlipperyKey).getTime();
+        const diffDays = Math.floor((currentMs - lastMs) / (1000 * 60 * 60 * 24));
+        if (diffDays <= 3) isHighlyFertile = true;
+    }
+    
+    if (!isHighlyFertile && lastDampKey) {
+        const lastMs = new Date(lastDampKey).getTime();
+        const diffDays = Math.floor((currentMs - lastMs) / (1000 * 60 * 60 * 24));
+        if (diffDays <= 3) isPotentiallyFertile = true;
     }
 
     // Determine Phase and Status
@@ -282,6 +314,9 @@ function analyzeCycle() {
         statusText = "Pre-Ovulatory";
         color = "var(--unknown)";
         message = `Cycle Day ${cycleDay}: Keep tracking daily routines to detect your fertile window opening.`;
+        if (todayData.mucus === 'unknown') {
+            message += " Missing mucus data - accuracy may be reduced.";
+        }
     }
 
     setInsight(statusText, message, color, cycleDay, phase);
@@ -347,6 +382,12 @@ function importData(event) {
         try {
             const importedData = JSON.parse(e.target.result);
             if (typeof importedData === 'object' && importedData !== null) {
+                // Migrate all data on import
+                for (let key in importedData) {
+                    if (importedData[key].mucus) {
+                        importedData[key].mucus = migrateMucusValue(importedData[key].mucus);
+                    }
+                }
                 cycleData = importedData;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(cycleData));
                 showToast('Data Imported Successfully!');
