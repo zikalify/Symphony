@@ -251,6 +251,12 @@ function analyzeCycle() {
     const currentMs = new Date(currentKey).getTime();
     const cycleDay = Math.floor((currentMs - startMs) / (1000 * 60 * 60 * 24)) + 1;
 
+    // Helper: days since a given date key relative to the current view date
+    function daysSince(dateKey) {
+        const ms = new Date(dateKey).getTime();
+        return Math.floor((currentMs - ms) / (1000 * 60 * 60 * 24));
+    }
+
     // Get Data up to current viewer date
     const datesUpToCurrent = sortedDates.filter(d => d >= cycleStartKey && d <= currentKey);
     const todayData = cycleData[currentKey] || { bleeding: 'none', mucus: 'none' };
@@ -258,6 +264,8 @@ function analyzeCycle() {
     let isHighlyFertile = false;
     let isPotentiallyFertile = false;
     let ovulationConfirmed = checkBBTShift(datesUpToCurrent);
+const recentTemps = datesUpToCurrent.map(d => cycleData[d].bbt).filter(t => t !== null && !isNaN(t));
+const hasTempData = recentTemps.length > 0;
     
     // Lookback logic: Check for fertile mucus in the last 3 days
     let lastSlipperyKey = null;
@@ -309,6 +317,17 @@ function analyzeCycle() {
         statusText = "Potentially Fertile";
         color = "var(--fertile-high)";
         message = `Fertile Window Opening: Non-peak mucus detected. Moderate probability of fertility.`;
+    } else if (lastSlipperyKey && daysSince(lastSlipperyKey) > 2 && recentTemps.length >= 3) {
+        // Fallback: peak mucus was seen >2 days ago, temperature data exists but no shift → assume luteal phase
+        phase = "Luteal Phase";
+        if (hasTempData) {
+            statusText = "Post-Ovulation (insufficient temperature rise)";
+        } else {
+            statusText = "Post-Ovulation (no temp data)";
+        }
+        color = "var(--fertile-low)";
+        const days = daysSince(lastSlipperyKey);
+        message = `Ovulation likely occurred ${days} day${days > 1 ? 's' : ''} ago. Fertility is now low.`;
     } else {
         phase = "Follicular Phase";
         statusText = "Pre-Ovulatory";
