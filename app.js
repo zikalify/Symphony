@@ -162,15 +162,20 @@ function saveDailyData() {
     const validBleeding = ['none', 'spotting', 'light', 'medium', 'heavy'];
     const validMucus = ['none', 'sticky', 'creamy', 'watery', 'eggwhite'];
     
-    cycleData[key] = {
-        bleeding: validBleeding.includes(bleedingVal) ? bleedingVal : 'none',
-        mucus: validMucus.includes(mucusVal) ? mucusVal : 'none',
-        bbt: bbtVal
-    };
+    const bleeding = validBleeding.includes(bleedingVal) ? bleedingVal : 'none';
+    const mucus = validMucus.includes(mucusVal) ? mucusVal : 'none';
+
+    // If all data is empty/none, delete the entry entirely so it doesn't affect cycle starts
+    if (bleeding === 'none' && mucus === 'none' && bbtVal === null) {
+        delete cycleData[key];
+        showToast('Entry Cleared');
+    } else {
+        cycleData[key] = { bleeding, mucus, bbt: bbtVal };
+        showToast('Entry Saved!');
+    }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cycleData));
     
-    showToast('Entry Saved!');
     analyzeCycle(); // Re-analyze after saving
 }
 
@@ -219,8 +224,9 @@ function analyzeCycle() {
         }
     }
 
-    if (!cycleStartKey && validDates.length > 0) {
-        cycleStartKey = validDates[0];
+    if (!cycleStartKey) {
+        setInsight("No Cycle Logged", "Track the first day of your period to start cycle calculations.", "var(--unknown)", "-", "-");
+        return;
     }
 
     // Calculate Cycle Day
