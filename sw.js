@@ -1,4 +1,4 @@
-const CACHE_NAME = 'symphony-v10';
+const CACHE_NAME = 'symphony-v11';
 const ASSETS = [
     './',
     './index.html',
