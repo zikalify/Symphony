@@ -305,7 +305,7 @@ function analyzeCycle() {
         phase = "Menstruation";
         statusText = "Period";
         color = "var(--period)";
-        message = `Cycle Day ${cycleDay}: Menstruation phase. Fertility is typically low, but assume potential fertility if your cycles are short.`;
+        message = `Menstruation phase. Fertility is typically low, but assume potential fertility if your cycles are short.`;
     } else if (ovulationConfirmed) {
         phase = "Luteal Phase";
         statusText = "Low Fertility";
@@ -344,7 +344,7 @@ function analyzeCycle() {
         statusText = "Pre-Ovulatory";
         color = "var(--unknown)";
         if (cycleDay !== "-") {
-            message = `Cycle Day ${cycleDay}: Keep tracking daily routines to detect your fertile window opening.`;
+            message = `Keep tracking daily routines to detect your fertile window opening.`;
         } else {
             message = `Keep tracking daily routines to detect your fertile window opening.`;
         }
