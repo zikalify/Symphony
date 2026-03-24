@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cycletracker-v14';
+const CACHE_NAME = 'cycletracker-v15';
 const ASSETS = [
     './',
     './index.html',
@@ -29,19 +29,25 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-    // Stale-while-revalidate strategy to serve quickly and update cache in background
+    if (event.request.method !== 'GET') return;
+
     event.respondWith(
         caches.match(event.request).then(cachedResponse => {
             const fetchPromise = fetch(event.request).then(networkResponse => {
-                if (event.request.method === 'GET') {
+                // Only cache successful, non-error responses
+                if (networkResponse && networkResponse.status === 200) {
+                    const cacheCopy = networkResponse.clone();
                     caches.open(CACHE_NAME).then(cache => {
-                        cache.put(event.request, networkResponse.clone());
+                        cache.put(event.request, cacheCopy);
                     });
                 }
                 return networkResponse;
             }).catch(() => {
-                // Ignore network errors, returning stale cache if available
+                // If fetch fails (offline), returning undefined so the stale cache is used
+                return undefined;
             });
+
+            // Return cached version immediately if available, otherwise wait for network
             return cachedResponse || fetchPromise;
         })
     );
