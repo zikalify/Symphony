@@ -344,9 +344,9 @@ function analyzeCycle() {
         statusText = "Pre-Ovulatory";
         color = "var(--unknown)";
         if (cycleDay !== "-") {
-            message = `Keep tracking daily routines to detect your fertile window opening.`;
+            message = `Keep logging daily to detect your fertile window opening.`;
         } else {
-            message = `Keep tracking daily routines to detect your fertile window opening.`;
+            message = `Keep logging daily to detect your fertile window opening.`;
         }
         if (todayData.bleeding === 'none' && todayData.mucus === 'unknown') {
             message += " Missing mucus data - accuracy may be reduced.";
