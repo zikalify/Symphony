@@ -8,7 +8,8 @@ Cycle Tracker is a privacy-first, offline-capable Progressive Web App (PWA) desi
   - **Bleeding**: Unknown, None, Spotting, Light, Medium, Heavy.
   - **Basal Body Temperature (BBT)**: Record your daily waking temperature to confirm ovulation.
   - **Cervical Mucus (assess after 5pm)**: Track what you observe (see) and feel (sensation). Log None/Dry, Cloudy/Damp, or Clear/Slippery.
-- **Goal Setting**: Choose whether you're trying to **Avoid Pregnancy** or **Conceive**. The app provides concise sex recommendations based on your goal and current fertility status.
+  - **Unprotected Sex**: Log whether unprotected intercourse occurred (for conception tracking and intercourse timing analysis).
+- **Goal Setting**: Choose whether you're trying to **Avoid Pregnancy** or **Conceive**. The app provides concise sex recommendations based on your goal and current fertility status. For conception, it suggests every-other-day intercourse during fertile windows to optimize sperm quality.
 - **Fertility Insights with Color Coding**:
   - **Green** - High Fertility (peak mucus or within 3-day window)
   - **Amber** - Potentially Fertile (non-peak mucus, pre-ovulation, or bleeding)
@@ -19,7 +20,7 @@ Cycle Tracker is a privacy-first, offline-capable Progressive Web App (PWA) desi
   - **Dry Day Rules**: Requires 3+ consecutive dry days for low fertility (unknown mucus breaks the streak).
   - **Doering Rule**: Uses your shortest past cycle to estimate earliest possible ovulation and applies a conservative cutoff.
   - **Ovulation Confirmation**: 3-over-6 temperature shift rule (0.2°C rise over previous 6-day high).
-- **Cycle Overview Stats**: At-a-glance stats including cycle day, phase, average cycle length, shortest cycle, predicted next period, and ovulation status.
+- **Cycle Overview Stats**: At-a-glance stats including cycle day, phase, average cycle length, shortest cycle, predicted next period, ovulation status, sex count this cycle, pregnancy possibility status, and intercourse timing score (sex on X of Y fertile days).
 - **Quick Navigation**: Tap the date display to jump back to today instantly.
 - **Offline First**: Works entirely offline once installed. Your data stays on your device.
 - **Data Backup**: Export cycle data and goal settings as JSON, import back anytime.

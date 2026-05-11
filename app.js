@@ -18,10 +18,12 @@ let userGoal = localStorage.getItem(GOAL_KEY) || 'avoid';
 const currentDateDisplay = document.getElementById('currentDateDisplay');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
+const sexIndicator = document.getElementById('sexIndicator');
 const dailyForm = document.getElementById('dailyForm');
 const bleedingGroup = document.getElementById('bleedingGroup');
 const mucusGroup = document.getElementById('mucusGroup');
 const goalGroup = document.getElementById('goalGroup');
+const sexGroup = document.getElementById('sexGroup');
 const bbtInput = document.getElementById('bbtInput');
 const insightMessage = document.getElementById('insightMessage');
 const fertilityStatus = document.getElementById('fertilityStatus');
@@ -32,6 +34,9 @@ const avgCycleDisplay = document.getElementById('avgCycleDisplay');
 const shortestCycleDisplay = document.getElementById('shortestCycleDisplay');
 const nextPeriodDisplay = document.getElementById('nextPeriodDisplay');
 const ovulationDisplay = document.getElementById('ovulationDisplay');
+const sexCountDisplay = document.getElementById('sexCountDisplay');
+const pregnancyDisplay = document.getElementById('pregnancyDisplay');
+const fertileSexDisplay = document.getElementById('fertileSexDisplay');
 const toast = document.getElementById('toast');
 const exportBtn = document.getElementById('exportBtn');
 const importInput = document.getElementById('importInput');
@@ -73,6 +78,14 @@ function updateDateDisplay() {
         currentDateDisplay.textContent = currentDate.toLocaleDateString(undefined, options);
         nextBtn.disabled = false;
     }
+
+    // Show sex indicator if sex was logged on this day
+    const dayData = cycleData[key];
+    if (dayData?.hadSex === 'yes') {
+        sexIndicator.classList.add('visible');
+    } else {
+        sexIndicator.classList.remove('visible');
+    }
 }
 
 function setupEventListeners() {
@@ -97,6 +110,7 @@ function setupEventListeners() {
     setupButtonGroup(bleedingGroup);
     setupButtonGroup(mucusGroup);
     setupButtonGroup(goalGroup);
+    setupButtonGroup(sexGroup);
 
     // Goal change listener
     const goalButtons = goalGroup.querySelectorAll('.option-btn');
@@ -151,6 +165,9 @@ function loadDailyData() {
     // Set Mucus
     setButtonGroupValue(mucusGroup, data.mucus);
 
+    // Set Sex
+    setButtonGroupValue(sexGroup, data.hadSex || 'no');
+
     // Set BBT
     bbtInput.value = data.bbt || '';
 }
@@ -191,6 +208,7 @@ function saveDailyData() {
 
     const bleedingVal = getButtonGroupValue(bleedingGroup);
     const mucusVal = getButtonGroupValue(mucusGroup);
+    const hadSexVal = getButtonGroupValue(sexGroup);
     let bbtVal = parseFloat(bbtInput.value);
 
     if (isNaN(bbtVal)) {
@@ -203,22 +221,25 @@ function saveDailyData() {
     // Validate enums to prevent garbage data
     const validBleeding = ['unknown', 'none', 'spotting', 'light', 'medium', 'heavy'];
     const validMucus = ['unknown', 'dry', 'damp', 'slippery'];
+    const validSex = ['yes', 'no'];
 
     const bleeding = validBleeding.includes(bleedingVal) ? bleedingVal : 'unknown';
     const mucus = validMucus.includes(mucusVal) ? mucusVal : 'unknown';
+    const hadSex = validSex.includes(hadSexVal) ? hadSexVal : 'no';
 
     // Only delete the entry if it's completely "Unknown" and no BBT.
     // "None" (bleeding) and "Dry" (mucus) are valid observations that should be saved.
     const isBleedingUnknown = bleeding === 'unknown';
     const isMucusUnknown = mucus === 'unknown';
+    const hadSexYes = hadSex === 'yes';
 
-    if (isBleedingUnknown && isMucusUnknown && bbtVal === null) {
+    if (isBleedingUnknown && isMucusUnknown && bbtVal === null && !hadSexYes) {
         if (cycleData[key]) {
             delete cycleData[key];
             showToast('Entry Cleared');
         }
     } else {
-        cycleData[key] = { bleeding, mucus, bbt: bbtVal };
+        cycleData[key] = { bleeding, mucus, bbt: bbtVal, hadSex };
         showToast('Entry Saved!');
     }
 
@@ -315,7 +336,7 @@ function getCycleStats() {
 function analyzeCycle() {
     const sortedDates = Object.keys(cycleData).sort();
     if (sortedDates.length === 0) {
-        setInsight("Unknown", "Start logging data to get insights.", "var(--unknown)", "-", "-", "", { avg: null, shortest: null }, "-", "-");
+        setInsight("Unknown", "Start logging data to get insights.", "var(--unknown)", "-", "-", "", { avg: null, shortest: null }, "-", "-", 0, "-", "-");
         return;
     }
 
@@ -323,7 +344,7 @@ function analyzeCycle() {
     const validDates = sortedDates.filter(d => d <= currentKey);
 
     if (validDates.length === 0) {
-        setInsight("No Past Data", "No history available prior to this date.", "var(--unknown)", "-", "-", "", { avg: null, shortest: null }, "-", "-");
+        setInsight("No Past Data", "No history available prior to this date.", "var(--unknown)", "-", "-", "", { avg: null, shortest: null }, "-", "-", 0, "-", "-");
         return;
     }
 
@@ -514,14 +535,77 @@ function analyzeCycle() {
         }
     }
     
+    // Check if sex occurred yesterday (for every-other-day conception advice)
+    const yesterday = new Date(currentDate);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = formatDateKey(yesterday);
+    const hadSexYesterday = cycleData[yesterdayKey]?.hadSex === 'yes';
+
+    // Count sex days in current cycle
+    let sexCount = 0;
+    let fertileDays = 0;
+    let sexOnFertileDays = 0;
+    if (cycleStartKey) {
+        const cycleDates = validDates.filter(d => d >= cycleStartKey);
+        for (const d of cycleDates) {
+            const data = cycleData[d] || {};
+            if (data.hadSex === 'yes') sexCount++;
+            
+            // Check if this day was fertile (fertile mucus or within 3-day window)
+            const isFertileMucus = ['damp', 'slippery'].includes(data.mucus);
+            if (isFertileMucus) {
+                fertileDays++;
+                if (data.hadSex === 'yes') sexOnFertileDays++;
+            }
+        }
+        
+        // Count 3-day window days as fertile
+        if (lastSlipperyKey || lastDampKey) {
+            const lastFertileMs = new Date(lastSlipperyKey || lastDampKey).getTime();
+            for (const d of cycleDates) {
+                const dayMs = new Date(d).getTime();
+                const diffDays = Math.floor((dayMs - lastFertileMs) / (1000 * 60 * 60 * 24));
+                if (diffDays > 0 && diffDays <= 3) {
+                    const data = cycleData[d] || {};
+                    if (!['damp', 'slippery'].includes(data.mucus)) {
+                        fertileDays++;
+                        if (data.hadSex === 'yes') sexOnFertileDays++;
+                    }
+                }
+            }
+        }
+    }
+    
+    const fertileSexText = fertileDays > 0 ? `${sexOnFertileDays}/${fertileDays}` : "-";
+
+    // Pregnancy possibility status (qualitative, grounded in necessary conditions)
+    let pregnancyText = "-";
+    if (ovulationConfirmed) {
+        pregnancyText = sexCount > 0 ? "Possible" : "No sex";
+        
+        // Pregnancy test reminder: if period is late and ovulation confirmed
+        if (userGoal === 'conceive' && cycleStats.avg) {
+            const startDate = new Date(cycleStartKey);
+            const expectedPeriod = new Date(startDate.getTime() + cycleStats.avg * 24 * 60 * 60 * 1000);
+            const daysLate = Math.floor((currentMs - expectedPeriod.getTime()) / (1000 * 60 * 60 * 24));
+            if (daysLate >= 3) {
+                sexRec = sexRec ? sexRec + " Take a pregnancy test." : "Take a pregnancy test.";
+            }
+        }
+    }
+
     // Sex recommendation based on goal
     let sexRec = "";
     const isFertileWindow = isHighlyFertile || isPotentiallyFertile;
     const isLowFertility = statusText === "Low Fertility";
-    
+
     if (userGoal === 'conceive') {
         if (isFertileWindow) {
-            sexRec = "Have sex today.";
+            if (hadSexYesterday) {
+                sexRec = "Rest today, had sex yesterday.";
+            } else {
+                sexRec = "Have sex today.";
+            }
         } else if (isLowFertility) {
             sexRec = "Low chance of conception.";
         }
@@ -532,8 +616,8 @@ function analyzeCycle() {
             sexRec = "Safe to have sex.";
         }
     }
-    
-    setInsight(statusText, message, color, cycleDay, phase, sexRec, cycleStats, nextPeriodText, ovulationText);
+
+    setInsight(statusText, message, color, cycleDay, phase, sexRec, cycleStats, nextPeriodText, ovulationText, sexCount, pregnancyText, fertileSexText);
 }
 
 // 3-over-6 rule: 3 days of temps >= 0.2C above the highest of the previous 6 days, tolerant of missing days
@@ -560,7 +644,7 @@ function checkBBTShift(dates) {
     return isShiftConfirmed;
 }
 
-function setInsight(statusLabel, message, colorCode, dayLabel, phaseLabel, sexRec, cycleStats, nextPeriodText, ovulationText) {
+function setInsight(statusLabel, message, colorCode, dayLabel, phaseLabel, sexRec, cycleStats, nextPeriodText, ovulationText, sexCount, pregnancyText, fertileSexText) {
     fertilityStatus.textContent = statusLabel;
     fertilityIndicator.style.backgroundColor = colorCode;
     document.getElementById('insightCard').style.borderTopColor = colorCode;
@@ -578,6 +662,9 @@ function setInsight(statusLabel, message, colorCode, dayLabel, phaseLabel, sexRe
     shortestCycleDisplay.textContent = cycleStats.shortest || "-";
     nextPeriodDisplay.textContent = nextPeriodText;
     ovulationDisplay.textContent = ovulationText;
+    sexCountDisplay.textContent = sexCount;
+    pregnancyDisplay.textContent = pregnancyText;
+    fertileSexDisplay.textContent = fertileSexText;
 }
 
 // --- Data Export/Import ---

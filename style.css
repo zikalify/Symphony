@@ -32,6 +32,9 @@ header { padding: 2rem 1.5rem 1.5rem; background: var(--card-bg); border-bottom-
 .calendar-nav button:disabled { color: var(--border); cursor: not-allowed; opacity: 0.5; }
 .calendar-nav h2 { font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: var(--transition); border-radius: 8px; padding: 0.5rem 1rem; }
 .calendar-nav h2:hover { background: var(--primary-light); }
+.sex-indicator { width: 8px; height: 8px; background: #e91e63; border-radius: 50%; display: none; margin-left: 8px; animation: pulse 2s infinite; }
+.sex-indicator.visible { display: inline-block; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
 main { padding: 0 1.5rem; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
 
@@ -52,7 +55,7 @@ main { padding: 0 1.5rem; max-width: 600px; margin: 0 auto; display: flex; flex-
 
 .btn-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .option-btn { padding: 0.7rem 1rem; background: var(--bg-color); border: 1px solid var(--border); border-radius: 10px; font-size: 0.9rem; cursor: pointer; transition: var(--transition); color: var(--text-main); flex: 1 1 auto; text-align: center; font-weight: 400; }
-#goalGroup .option-btn { flex: 1 1 0; min-width: 0; }
+#goalGroup .option-btn, #sexGroup .option-btn { flex: 1 1 0; min-width: 0; }
 .option-btn.active { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 4px 12px rgba(212, 163, 115, 0.3); font-weight: 500; }
 
 .save-btn { width: 100%; padding: 1rem; border: none; border-radius: 12px; background: var(--primary); color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: var(--transition); margin-top: 0.5rem; }
