@@ -655,7 +655,7 @@ function analyzeCycle() {
 
     // Sex recommendation based on goal
     let sexRec = "";
-    const isFertileWindow = isHighlyFertile || isPotentiallyFertile;
+    const isFertileWindow = isHighlyFertile || isPotentiallyFertile || statusText === "Potentially Fertile";
     const isLowFertility = statusText === "Low Fertility";
 
     if (userGoal === 'conceive') {
