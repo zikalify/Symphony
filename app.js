@@ -321,11 +321,16 @@ function analyzeCycle() {
             // If mucus is 'unknown', we don't count it but don't break either
         }
         
-        // Early dry phase: at least 3 consecutive dry days, cycle day 6-12, no fertile mucus recently
+        // Check for recent fertile mucus
         const hasRecentFertileMucus = (lastSlipperyKey && daysSince(lastSlipperyKey) <= 5) ||
                                       (lastDampKey && daysSince(lastDampKey) <= 5);
         
-        if (consecutiveDryDays >= 3 && cycleDay >= 6 && cycleDay <= 12 && !hasRecentFertileMucus) {
+        // Immediate post-period rule: 1 dry day on cycle days 6-7
+        if (consecutiveDryDays >= 1 && cycleDay >= 6 && cycleDay <= 7 && !hasRecentFertileMucus) {
+            isEarlyDryPhase = true;
+        }
+        // TwoDay method rule: 2 consecutive dry days on cycle days 8-20
+        else if (consecutiveDryDays >= 2 && cycleDay >= 8 && cycleDay <= 20 && !hasRecentFertileMucus) {
             isEarlyDryPhase = true;
         }
     }
@@ -342,17 +347,17 @@ function analyzeCycle() {
         phase = cycleStartKey ? "Follicular Phase" : "Unknown Phase";
         statusText = "High Fertility";
         color = "var(--fertile-high)";
-        message = "Peak fertility detected.";
+        message = "Peak fertility.";
     } else if (isPotentiallyFertile) {
         phase = cycleStartKey ? "Follicular Phase" : "Unknown Phase";
         statusText = "Potentially Fertile";
         color = "var(--fertile-moderate)";
-        message = "Fertility signs present.";
+        message = "Fertility signs.";
     } else if (isEarlyDryPhase) {
         phase = "Follicular Phase";
         statusText = "Low Fertility";
         color = "var(--fertile-low)";
-        message = "Dry days detected.";
+        message = "No fertility signs.";
     } else if (ovulationConfirmed) {
         phase = "Luteal Phase";
         statusText = "Low Fertility";
@@ -366,25 +371,19 @@ function analyzeCycle() {
     } else if (isBleeding && cycleDay > 5) {
         phase = "Follicular Phase";
         statusText = "Potentially Fertile";
-        color = "var(--unknown)";
-        message = "Bleeding detected.";
+        color = "var(--fertile-moderate)";
+        message = "Bleeding.";
     } else {
         if (!cycleStartKey) {
             phase = "Unknown Phase";
             statusText = "Unknown";
             color = "var(--unknown)";
-            message = "Log more data.";;
-            if (todayData.mucus === 'dry') {
-                message += " Dry mucus detected.";
-            }
+            message = "Need more data.";
         } else {
             phase = "Follicular Phase";
             statusText = "Potentially Fertile";
-            color = "var(--unknown)";
-            message = "Keep logging daily.";
-            if (todayData.mucus === 'dry') {
-                message += " Dry mucus detected.";
-            }
+            color = "var(--fertile-moderate)";
+            message = "Pre-ovulation.";
         }
     }
 
