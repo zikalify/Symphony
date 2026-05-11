@@ -329,24 +329,31 @@ function getCycleStats() {
     }
     
     if (cycleStarts.length < 2) {
-        return { avg: null, shortest: null };
+        return { median: null, shortest: null };
     }
     
-    let total = 0;
-    let count = 0;
+    const cycleLengths = [];
     let shortest = Infinity;
-    
+
     for (let i = 1; i < cycleStarts.length; i++) {
         const days = Math.floor((cycleStarts[i] - cycleStarts[i - 1]) / (1000 * 60 * 60 * 24));
         if (days > 0) {
-            total += days;
-            count++;
+            cycleLengths.push(days);
             if (days < shortest) shortest = days;
         }
     }
-    
+
+    let median = null;
+    if (cycleLengths.length > 0) {
+        cycleLengths.sort((a, b) => a - b);
+        const mid = Math.floor(cycleLengths.length / 2);
+        median = cycleLengths.length % 2 === 0
+            ? Math.round((cycleLengths[mid - 1] + cycleLengths[mid]) / 2)
+            : cycleLengths[mid];
+    }
+
     return {
-        avg: count > 0 ? Math.round(total / count) : null,
+        median: median,
         shortest: shortest !== Infinity ? shortest : null
     };
 }
@@ -355,7 +362,7 @@ function getCycleStats() {
 function analyzeCycle() {
     const sortedDates = Object.keys(cycleData).sort();
     if (sortedDates.length === 0) {
-        setInsight("Unknown", "Start logging data to get insights.", "var(--unknown)", "-", "-", "", { avg: null, shortest: null }, "-", "-", 0, "-", "-");
+        setInsight("Unknown", "Start logging data to get insights.", "var(--unknown)", "-", "-", "", { median: null, shortest: null }, "-", "-", 0, "-", "-");
         return;
     }
 
@@ -363,7 +370,7 @@ function analyzeCycle() {
     const validDates = sortedDates.filter(d => d <= currentKey);
 
     if (validDates.length === 0) {
-        setInsight("No Past Data", "No history available prior to this date.", "var(--unknown)", "-", "-", "", { avg: null, shortest: null }, "-", "-", 0, "-", "-");
+        setInsight("No Past Data", "No history available prior to this date.", "var(--unknown)", "-", "-", "", { median: null, shortest: null }, "-", "-", 0, "-", "-");
         return;
     }
 
@@ -393,9 +400,9 @@ function analyzeCycle() {
             const daysUntilDue = Math.floor((dueDate.getTime() - currentMs) / (1000 * 60 * 60 * 24));
             const dueText = daysUntilDue > 0 ? `${daysUntilDue}d left` : "Due today";
 
-            setInsight("Pregnant", `Week ${weeksText}. Due ${dueDateStr}.`, "#e91e63", weeksText, "Pregnancy", "", { avg: null, shortest: null }, dueText, "-", 0, "-", "-");
+            setInsight("Pregnant", `Week ${weeksText}. Due ${dueDateStr}.`, "#e91e63", weeksText, "Pregnancy", "", { median: null, shortest: null }, dueText, "-", 0, "-", "-");
         } else {
-            setInsight("Pregnant", "Log your last period start date to calculate due date.", "#e91e63", "-", "Pregnancy", "", { avg: null, shortest: null }, "-", "-", 0, "-", "-");
+            setInsight("Pregnant", "Log your last period start date to calculate due date.", "#e91e63", "-", "Pregnancy", "", { median: null, shortest: null }, "-", "-", 0, "-", "-");
         }
         return;
     }
@@ -563,9 +570,9 @@ function analyzeCycle() {
     
     // Compute next predicted period
     let nextPeriodText = "-";
-    if (cycleStartKey && cycleStats.avg) {
+    if (cycleStartKey && cycleStats.median) {
         const startDate = new Date(cycleStartKey);
-        const nextPeriod = new Date(startDate.getTime() + cycleStats.avg * 24 * 60 * 60 * 1000);
+        const nextPeriod = new Date(startDate.getTime() + cycleStats.median * 24 * 60 * 60 * 1000);
         const daysUntil = Math.floor((nextPeriod.getTime() - currentMs) / (1000 * 60 * 60 * 24));
         if (daysUntil >= 0) {
             nextPeriodText = daysUntil === 0 ? "Today" : `In ${daysUntil}d`;
@@ -576,8 +583,8 @@ function analyzeCycle() {
     let ovulationText = "-";
     if (ovulationConfirmed) {
         ovulationText = "Confirmed";
-    } else if (cycleStartKey && cycleStats.avg) {
-        const estimatedOvDay = cycleStats.avg - 14;
+    } else if (cycleStartKey && cycleStats.median) {
+        const estimatedOvDay = cycleStats.median - 14;
         if (typeof cycleDay === 'number') {
             if (cycleDay < estimatedOvDay) {
                 ovulationText = `Day ~${estimatedOvDay}`;
@@ -636,9 +643,9 @@ function analyzeCycle() {
         pregnancyText = sexCount > 0 ? "Possible" : "No sex";
         
         // Pregnancy test reminder: if period is late and ovulation confirmed
-        if (userGoal === 'conceive' && cycleStats.avg) {
+        if (userGoal === 'conceive' && cycleStats.median) {
             const startDate = new Date(cycleStartKey);
-            const expectedPeriod = new Date(startDate.getTime() + cycleStats.avg * 24 * 60 * 60 * 1000);
+            const expectedPeriod = new Date(startDate.getTime() + cycleStats.median * 24 * 60 * 60 * 1000);
             const daysLate = Math.floor((currentMs - expectedPeriod.getTime()) / (1000 * 60 * 60 * 24));
             if (daysLate >= 3) {
                 sexRec = sexRec ? sexRec + " Take a pregnancy test." : "Take a pregnancy test.";
@@ -710,7 +717,7 @@ function setInsight(statusLabel, message, colorCode, dayLabel, phaseLabel, sexRe
 
     cycleDayDisplay.textContent = dayLabel;
     cyclePhaseDisplay.textContent = phaseLabel;
-    avgCycleDisplay.textContent = cycleStats.avg || "-";
+    avgCycleDisplay.textContent = cycleStats.median || "-";
     shortestCycleDisplay.textContent = cycleStats.shortest || "-";
     nextPeriodDisplay.textContent = nextPeriodText;
     ovulationDisplay.textContent = ovulationText;

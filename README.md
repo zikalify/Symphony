@@ -21,7 +21,7 @@ Cycle Tracker is a privacy-first, offline-capable Progressive Web App (PWA) desi
   - **Dry Day Rules**: Requires 3+ consecutive dry days for low fertility (unknown mucus breaks the streak).
   - **Doering Rule**: Uses your shortest past cycle to estimate earliest possible ovulation and applies a conservative cutoff.
   - **Ovulation Confirmation**: 3-over-6 temperature shift rule (0.2°C rise over previous 6-day high).
-- **Cycle Overview Stats**: At-a-glance stats including cycle day, phase, average cycle length, shortest cycle, predicted next period, ovulation status, sex count this cycle, pregnancy possibility status, and intercourse timing score (sex on X of Y fertile days).
+- **Cycle Overview Stats**: At-a-glance stats including cycle day, phase, median cycle length, shortest cycle, predicted next period, ovulation status, sex count this cycle, pregnancy possibility status, and intercourse timing score (sex on X of Y fertile days).
 - **Quick Navigation**: Tap the date display to jump back to today instantly.
 - **Offline First**: Works entirely offline once installed. Your data stays on your device.
 - **Data Backup**: Export cycle data and goal settings as JSON, import back anytime.
