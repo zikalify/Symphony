@@ -325,12 +325,12 @@ function analyzeCycle() {
         const hasRecentFertileMucus = (lastSlipperyKey && daysSince(lastSlipperyKey) <= 5) ||
                                       (lastDampKey && daysSince(lastDampKey) <= 5);
         
-        // Immediate post-period rule: 1 dry day on cycle days 6-7
-        if (consecutiveDryDays >= 1 && cycleDay >= 6 && cycleDay <= 7 && !hasRecentFertileMucus) {
+        // Immediate post-period rule: 1 dry day on cycle days 6-7, but today must be dry
+        if (todayData.mucus === 'dry' && consecutiveDryDays >= 1 && cycleDay >= 6 && cycleDay <= 7 && !hasRecentFertileMucus) {
             isEarlyDryPhase = true;
         }
-        // TwoDay method rule: 2 consecutive dry days on cycle days 8-20
-        else if (consecutiveDryDays >= 2 && cycleDay >= 8 && cycleDay <= 20 && !hasRecentFertileMucus) {
+        // TwoDay method rule: 2 consecutive dry days on cycle days 8-20, but today must be dry
+        else if (todayData.mucus === 'dry' && consecutiveDryDays >= 2 && cycleDay >= 8 && cycleDay <= 20 && !hasRecentFertileMucus) {
             isEarlyDryPhase = true;
         }
     }
