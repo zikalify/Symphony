@@ -10,7 +10,9 @@ if ('serviceWorker' in navigator) {
 // --- State Management ---
 let currentDate = new Date();
 const STORAGE_KEY = 'cycletracker_nfp_data';
+const GOAL_KEY = 'cycletracker_goal';
 let cycleData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+let userGoal = localStorage.getItem(GOAL_KEY) || 'avoid';
 
 // --- DOM Elements ---
 const currentDateDisplay = document.getElementById('currentDateDisplay');
@@ -19,12 +21,17 @@ const nextBtn = document.getElementById('nextBtn');
 const dailyForm = document.getElementById('dailyForm');
 const bleedingGroup = document.getElementById('bleedingGroup');
 const mucusGroup = document.getElementById('mucusGroup');
+const goalGroup = document.getElementById('goalGroup');
 const bbtInput = document.getElementById('bbtInput');
 const insightMessage = document.getElementById('insightMessage');
 const fertilityStatus = document.getElementById('fertilityStatus');
 const fertilityIndicator = document.getElementById('fertilityIndicator');
 const cycleDayDisplay = document.getElementById('cycleDayDisplay');
 const cyclePhaseDisplay = document.getElementById('cyclePhaseDisplay');
+const avgCycleDisplay = document.getElementById('avgCycleDisplay');
+const shortestCycleDisplay = document.getElementById('shortestCycleDisplay');
+const nextPeriodDisplay = document.getElementById('nextPeriodDisplay');
+const ovulationDisplay = document.getElementById('ovulationDisplay');
 const toast = document.getElementById('toast');
 const exportBtn = document.getElementById('exportBtn');
 const importInput = document.getElementById('importInput');
@@ -33,8 +40,13 @@ const importInput = document.getElementById('importInput');
 function init() {
     updateDateDisplay();
     loadDailyData();
+    loadGoalSetting();
     analyzeCycle();
     setupEventListeners();
+}
+
+function loadGoalSetting() {
+    setButtonGroupValue(goalGroup, userGoal);
 }
 
 function formatDateKey(date) {
@@ -84,6 +96,17 @@ function setupEventListeners() {
     // Custom Button Groups logic
     setupButtonGroup(bleedingGroup);
     setupButtonGroup(mucusGroup);
+    setupButtonGroup(goalGroup);
+
+    // Goal change listener
+    const goalButtons = goalGroup.querySelectorAll('.option-btn');
+    goalButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            userGoal = getButtonGroupValue(goalGroup);
+            localStorage.setItem(GOAL_KEY, userGoal);
+            analyzeCycle();
+        });
+    });
 
     // Form Submission
     dailyForm.addEventListener('submit', (e) => {
@@ -212,11 +235,87 @@ function showToast(message) {
     }, 3000);
 }
 
+// --- Doering Rule Helper ---
+function getDoeringCutoff() {
+    const sortedDates = Object.keys(cycleData).sort();
+    const cycleStarts = [];
+    
+    // Find all cycle start dates (first day of full bleeding)
+    for (let i = 0; i < sortedDates.length; i++) {
+        const dateKey = sortedDates[i];
+        const data = cycleData[dateKey];
+        const prevDate = sortedDates[i - 1];
+        const prevData = prevDate ? cycleData[prevDate] : null;
+        
+        const isFullBleeding = ['light', 'medium', 'heavy'].includes(data.bleeding);
+        const wasBleeding = prevData && ['light', 'medium', 'heavy'].includes(prevData.bleeding);
+        
+        if (isFullBleeding && !wasBleeding) {
+            cycleStarts.push(new Date(dateKey).getTime());
+        }
+    }
+    
+    if (cycleStarts.length < 2) return null; // Need at least 2 cycles
+    
+    // Calculate cycle lengths (days between consecutive starts)
+    let shortestCycle = Infinity;
+    for (let i = 1; i < cycleStarts.length; i++) {
+        const days = Math.floor((cycleStarts[i] - cycleStarts[i - 1]) / (1000 * 60 * 60 * 24));
+        if (days > 0 && days < shortestCycle) {
+            shortestCycle = days;
+        }
+    }
+    
+    return shortestCycle !== Infinity ? shortestCycle - 20 : null;
+}
+
+// --- Cycle Stats Helper ---
+function getCycleStats() {
+    const sortedDates = Object.keys(cycleData).sort();
+    const cycleStarts = [];
+    
+    for (let i = 0; i < sortedDates.length; i++) {
+        const dateKey = sortedDates[i];
+        const data = cycleData[dateKey];
+        const prevDate = sortedDates[i - 1];
+        const prevData = prevDate ? cycleData[prevDate] : null;
+        
+        const isFullBleeding = ['light', 'medium', 'heavy'].includes(data.bleeding);
+        const wasBleeding = prevData && ['light', 'medium', 'heavy'].includes(prevData.bleeding);
+        
+        if (isFullBleeding && !wasBleeding) {
+            cycleStarts.push(new Date(dateKey).getTime());
+        }
+    }
+    
+    if (cycleStarts.length < 2) {
+        return { avg: null, shortest: null };
+    }
+    
+    let total = 0;
+    let count = 0;
+    let shortest = Infinity;
+    
+    for (let i = 1; i < cycleStarts.length; i++) {
+        const days = Math.floor((cycleStarts[i] - cycleStarts[i - 1]) / (1000 * 60 * 60 * 24));
+        if (days > 0) {
+            total += days;
+            count++;
+            if (days < shortest) shortest = days;
+        }
+    }
+    
+    return {
+        avg: count > 0 ? Math.round(total / count) : null,
+        shortest: shortest !== Infinity ? shortest : null
+    };
+}
+
 // --- Symptothermal Algorithm ---
 function analyzeCycle() {
     const sortedDates = Object.keys(cycleData).sort();
     if (sortedDates.length === 0) {
-        setInsight("Unknown", "Start logging data to get insights.", "var(--unknown)", "-", "-");
+        setInsight("Unknown", "Start logging data to get insights.", "var(--unknown)", "-", "-", "", { avg: null, shortest: null }, "-", "-");
         return;
     }
 
@@ -224,7 +323,7 @@ function analyzeCycle() {
     const validDates = sortedDates.filter(d => d <= currentKey);
 
     if (validDates.length === 0) {
-        setInsight("No Past Data", "No history available prior to this date.", "var(--unknown)", "-", "-");
+        setInsight("No Past Data", "No history available prior to this date.", "var(--unknown)", "-", "-", "", { avg: null, shortest: null }, "-", "-");
         return;
     }
 
@@ -315,22 +414,21 @@ function analyzeCycle() {
             
             if (data.mucus === 'dry') {
                 consecutiveDryDays++;
-            } else if (data.mucus === 'damp' || data.mucus === 'slippery') {
-                break; // Stop if we hit fertile mucus
+            } else {
+                break; // Stop if mucus is unknown, damp, or slippery
             }
-            // If mucus is 'unknown', we don't count it but don't break either
         }
         
         // Check for recent fertile mucus
         const hasRecentFertileMucus = (lastSlipperyKey && daysSince(lastSlipperyKey) <= 5) ||
                                       (lastDampKey && daysSince(lastDampKey) <= 5);
         
-        // Immediate post-period rule: 1 dry day on cycle days 6-7, but today must be dry
-        if (todayData.mucus === 'dry' && consecutiveDryDays >= 1 && cycleDay >= 6 && cycleDay <= 7 && !hasRecentFertileMucus) {
-            isEarlyDryPhase = true;
-        }
-        // TwoDay method rule: 2 consecutive dry days on cycle days 8-20, but today must be dry
-        else if (todayData.mucus === 'dry' && consecutiveDryDays >= 2 && cycleDay >= 8 && cycleDay <= 20 && !hasRecentFertileMucus) {
+        // Doering Rule: use shortest cycle - 20 as earliest possible ovulation cutoff
+        const doeringCutoff = getDoeringCutoff();
+        const beforeDoeringCutoff = doeringCutoff === null || cycleDay < doeringCutoff;
+        
+        // STM dry day rule: 3+ consecutive dry days after period, today must be dry, before Doering cutoff
+        if (todayData.mucus === 'dry' && consecutiveDryDays >= 3 && cycleDay >= 6 && !hasRecentFertileMucus && beforeDoeringCutoff) {
             isEarlyDryPhase = true;
         }
     }
@@ -387,7 +485,55 @@ function analyzeCycle() {
         }
     }
 
-    setInsight(statusText, message, color, cycleDay, phase);
+    // Compute cycle stats
+    const cycleStats = getCycleStats();
+    
+    // Compute next predicted period
+    let nextPeriodText = "-";
+    if (cycleStartKey && cycleStats.avg) {
+        const startDate = new Date(cycleStartKey);
+        const nextPeriod = new Date(startDate.getTime() + cycleStats.avg * 24 * 60 * 60 * 1000);
+        const daysUntil = Math.floor((nextPeriod.getTime() - currentMs) / (1000 * 60 * 60 * 24));
+        if (daysUntil >= 0) {
+            nextPeriodText = daysUntil === 0 ? "Today" : `In ${daysUntil}d`;
+        }
+    }
+    
+    // Compute ovulation display
+    let ovulationText = "-";
+    if (ovulationConfirmed) {
+        ovulationText = "Confirmed";
+    } else if (cycleStartKey && cycleStats.avg) {
+        const estimatedOvDay = cycleStats.avg - 14;
+        if (typeof cycleDay === 'number') {
+            if (cycleDay < estimatedOvDay) {
+                ovulationText = `Day ~${estimatedOvDay}`;
+            } else if (cycleDay >= estimatedOvDay && cycleDay <= estimatedOvDay + 2) {
+                ovulationText = "Expected now";
+            }
+        }
+    }
+    
+    // Sex recommendation based on goal
+    let sexRec = "";
+    const isFertileWindow = isHighlyFertile || isPotentiallyFertile;
+    const isLowFertility = statusText === "Low Fertility";
+    
+    if (userGoal === 'conceive') {
+        if (isFertileWindow) {
+            sexRec = "Have sex today.";
+        } else if (isLowFertility) {
+            sexRec = "Low chance of conception.";
+        }
+    } else {
+        if (isFertileWindow) {
+            sexRec = "Avoid sex today.";
+        } else if (isLowFertility) {
+            sexRec = "Safe to have sex.";
+        }
+    }
+    
+    setInsight(statusText, message, color, cycleDay, phase, sexRec, cycleStats, nextPeriodText, ovulationText);
 }
 
 // 3-over-6 rule: 3 days of temps >= 0.2C above the highest of the previous 6 days, tolerant of missing days
@@ -414,21 +560,33 @@ function checkBBTShift(dates) {
     return isShiftConfirmed;
 }
 
-function setInsight(statusLabel, message, colorCode, dayLabel, phaseLabel) {
+function setInsight(statusLabel, message, colorCode, dayLabel, phaseLabel, sexRec, cycleStats, nextPeriodText, ovulationText) {
     fertilityStatus.textContent = statusLabel;
-    insightMessage.textContent = message;
     fertilityIndicator.style.backgroundColor = colorCode;
-
-    // The visual border of the card
     document.getElementById('insightCard').style.borderTopColor = colorCode;
+
+    // Combine message with sex recommendation
+    if (sexRec) {
+        insightMessage.textContent = message + " " + sexRec;
+    } else {
+        insightMessage.textContent = message;
+    }
 
     cycleDayDisplay.textContent = dayLabel;
     cyclePhaseDisplay.textContent = phaseLabel;
+    avgCycleDisplay.textContent = cycleStats.avg || "-";
+    shortestCycleDisplay.textContent = cycleStats.shortest || "-";
+    nextPeriodDisplay.textContent = nextPeriodText;
+    ovulationDisplay.textContent = ovulationText;
 }
 
 // --- Data Export/Import ---
 function exportData() {
-    const dataStr = JSON.stringify(cycleData, null, 2);
+    const exportObj = {
+        cycleData: cycleData,
+        goal: userGoal
+    };
+    const dataStr = JSON.stringify(exportObj, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
 
@@ -448,21 +606,35 @@ function importData(event) {
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const importedData = JSON.parse(e.target.result);
-            if (typeof importedData === 'object' && importedData !== null) {
-                // Migrate all data on import
-                for (let key in importedData) {
-                    if (importedData[key].mucus) {
-                        importedData[key].mucus = migrateMucusValue(importedData[key].mucus);
-                    }
-                }
-                cycleData = importedData;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(cycleData));
-                showToast('Data Imported Successfully!');
-                handleDateChange();
-            } else {
+            const importedObj = JSON.parse(e.target.result);
+            if (typeof importedObj !== 'object' || importedObj === null) {
                 showToast('Invalid backup file format.');
+                return;
             }
+
+            // Detect format: new format has "cycleData" and "goal"; old format is cycleData directly
+            let rawData = importedObj;
+            if (importedObj.cycleData && typeof importedObj.cycleData === 'object') {
+                rawData = importedObj.cycleData;
+                // Restore goal setting if present
+                if (importedObj.goal && ['avoid', 'conceive'].includes(importedObj.goal)) {
+                    userGoal = importedObj.goal;
+                    localStorage.setItem(GOAL_KEY, userGoal);
+                    setButtonGroupValue(goalGroup, userGoal);
+                }
+            }
+
+            // Migrate mucus values in imported data
+            for (let key in rawData) {
+                if (rawData[key].mucus) {
+                    rawData[key].mucus = migrateMucusValue(rawData[key].mucus);
+                }
+            }
+
+            cycleData = rawData;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cycleData));
+            showToast('Data Imported Successfully!');
+            handleDateChange();
         } catch (err) {
             showToast('Error reading backup file.');
         }

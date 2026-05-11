@@ -54,7 +54,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Cervical Mucus</label>
+                    <label>Cervical Mucus (assess after 5pm)</label>
                     <div class="btn-group" id="mucusGroup">
                         <button type="button" class="option-btn active" data-value="unknown">Unknown</button>
                         <button type="button" class="option-btn" data-value="dry">None/Dry</button>
@@ -78,11 +78,35 @@
                     <span class="stat-label">Phase</span>
                     <span class="stat-value" id="cyclePhaseDisplay">-</span>
                 </div>
+                <div class="stat-box">
+                    <span class="stat-label">Avg Cycle</span>
+                    <span class="stat-value" id="avgCycleDisplay">-</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Shortest Cycle</span>
+                    <span class="stat-value" id="shortestCycleDisplay">-</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Next Period</span>
+                    <span class="stat-value" id="nextPeriodDisplay">-</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Ovulation</span>
+                    <span class="stat-value" id="ovulationDisplay">-</span>
+                </div>
             </div>
         </section>
 
         <section class="card settings-card">
-            <h3>Data Backup</h3>
+            <h3>Settings</h3>
+            <div class="form-group">
+                <label>Goal</label>
+                <div class="btn-group" id="goalGroup">
+                    <button type="button" class="option-btn active" data-value="avoid">Avoid Pregnancy</button>
+                    <button type="button" class="option-btn" data-value="conceive">Conceive</button>
+                </div>
+            </div>
+            <h3 style="margin-top: 1.5rem;">Data Backup</h3>
             <div class="settings-actions">
                 <button type="button" id="exportBtn" class="option-btn">Export Data</button>
                 <label for="importInput" class="option-btn" style="cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0;">Import Data</label>
@@ -97,16 +121,24 @@
                 <p class="faq-answer">A new cycle begins on your first day of full bleeding (Light, Medium, or Heavy). Spotting alone does not start a new cycle.</p>
             </details>
             <details class="faq-item">
+                <summary class="faq-question">What do the mucus options mean?</summary>
+                <p class="faq-answer">Each option covers both what you <strong>observe</strong> (see) and what you <strong>feel</strong> (sensation at the vulva). <strong>None/Dry</strong> means you feel dry AND see nothing. <strong>Cloudy/Damp</strong> means you see cloudy mucus OR feel damp/wet. <strong>Clear/Slippery</strong> means you see clear mucus OR feel slippery/lubricated. Log the option that matches either your observation or your feeling.</p>
+            </details>
+            <details class="faq-item">
                 <summary class="faq-question">What counts as fertile mucus?</summary>
-                <p class="faq-answer">Both <strong>Clear/Slippery</strong> and <strong>Cloudy/Damp</strong> mucus are considered fertile signs. Clear/Slippery indicates peak fertility, while Cloudy/Damp indicates potential fertility.</p>
+                <p class="faq-answer">Both <strong>Clear/Slippery</strong> and <strong>Cloudy/Damp</strong> are considered fertile signs. Clear/Slippery indicates peak fertility, while Cloudy/Damp indicates potential fertility. <strong>None/Dry</strong> means no fertility signs are present.</p>
             </details>
             <details class="faq-item">
                 <summary class="faq-question">How should I check my cervical mucus?</summary>
-                <p class="faq-answer">You can monitor mucus by paying attention to the <strong>sensation</strong> at the vulva throughout the day (feeling dry, wet, or lubricated), or by <strong>direct observation</strong>. For direct observation, wipe front-to-back with toilet tissue before using the bathroom, or use clean fingers (wash thoroughly first to maintain hygiene). Note what you see (cloudy, clear) and what you feel (dry, damp, slippery/stretchy).</p>
+                <p class="faq-answer">Check after 5pm for the most accurate reading. You can monitor mucus by paying attention to the <strong>sensation</strong> at the vulva throughout the day (feeling dry, wet, or lubricated), or by <strong>direct observation</strong>. For direct observation, wipe front-to-back with toilet tissue before using the bathroom, or use clean fingers (wash thoroughly first to maintain hygiene). Note what you see (cloudy, clear) and what you feel (dry, damp, slippery/stretchy).</p>
             </details>
             <details class="faq-item">
-                <summary class="faq-question">Why am I still "Fertile" after my mucus dries up?</summary>
+                <summary class="faq-question">Why am I still "Potentially Fertile" after my mucus dries up?</summary>
                 <p class="faq-answer">Cycle Tracker applies a <strong>3-Day Rule</strong>. Your fertile window stays open for 3 full days after your last observation of fertile mucus, providing a safety margin.</p>
+            </details>
+            <details class="faq-item">
+                <summary class="faq-question">When is pre-ovulation low fertility possible?</summary>
+                <p class="faq-answer">Before ovulation, low fertility requires <strong>3 consecutive dry days</strong> after your period ends, with no fertile mucus in the last 5 days. The app also applies the <strong>Doering Rule</strong>, which uses your shortest past cycle to estimate the earliest possible ovulation. Days before that cutoff are considered potentially fertile even with dry mucus.</p>
             </details>
             <details class="faq-item">
                 <summary class="faq-question">How is ovulation confirmed?</summary>
@@ -114,7 +146,7 @@
             </details>
             <details class="faq-item">
                 <summary class="faq-question">What if I don't track my temperature (BBT)?</summary>
-                <p class="faq-answer">Cycle Tracker requires a temperature shift to confirm ovulation. If no temperatures are logged, the app will conservatively assume you remain in a potentially fertile phase to ensure safety. You will not enter the confirmed Low Fertility (post-ovulation) phase without temperature data.</p>
+                <p class="faq-answer">Cycle Tracker requires a temperature shift to confirm ovulation. Without temperature data, the app can still identify pre-ovulation low fertility through dry day rules, but you will not enter the confirmed post-ovulation phase without BBT data.</p>
             </details>
         </section>
     </main>

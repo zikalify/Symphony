@@ -4,24 +4,35 @@ Cycle Tracker is a privacy-first, offline-capable Progressive Web App (PWA) desi
 
 ## Features
 
-- **Daily Logging**: Easily track your daily signs, including:
+- **Daily Logging**: Track your daily signs with evening assessment guidance:
   - **Bleeding**: Unknown, None, Spotting, Light, Medium, Heavy.
   - **Basal Body Temperature (BBT)**: Record your daily waking temperature to confirm ovulation.
-  - **Cervical Mucus**: Track mucus consistency (Dry, Cloudy/Damp, Clear/Slippery) to identify fertile windows.
-- **Fertility Insights**: 
-  - Automatically identifies cycle phases based on the Symptothermal method.
-  - Applies safety rules like the "3-Day Rule" for fertile mucus.
-  - Confirms ovulation by analyzing BBT temperature shifts.
-- **Offline First**: Built as a Progressive Web App (PWA), meaning it works entirely offline once installed. Your data stays on your device.
-- **Data Backup**: Export your cycle data as a JSON file, and import it back anytime to secure or migrate your data.
-- **Modern UI**: A responsive, mobile-first design with smooth aesthetics and interactions.
+  - **Cervical Mucus (assess after 5pm)**: Track what you observe (see) and feel (sensation). Log None/Dry, Cloudy/Damp, or Clear/Slippery.
+- **Goal Setting**: Choose whether you're trying to **Avoid Pregnancy** or **Conceive**. The app provides concise sex recommendations based on your goal and current fertility status.
+- **Fertility Insights with Color Coding**:
+  - **Green** - High Fertility (peak mucus or within 3-day window)
+  - **Amber** - Potentially Fertile (non-peak mucus, pre-ovulation, or bleeding)
+  - **Blue** - Low Fertility (dry days confirmed or post-ovulation)
+  - **Orange** - Menstruation (days 1-5)
+- **STM-Compliant Rules**:
+  - **3-Day Rule**: Fertile window stays open for 3 days after last fertile mucus.
+  - **Dry Day Rules**: Requires 3+ consecutive dry days for low fertility (unknown mucus breaks the streak).
+  - **Doering Rule**: Uses your shortest past cycle to estimate earliest possible ovulation and applies a conservative cutoff.
+  - **Ovulation Confirmation**: 3-over-6 temperature shift rule (0.2°C rise over previous 6-day high).
+- **Cycle Overview Stats**: At-a-glance stats including cycle day, phase, average cycle length, shortest cycle, predicted next period, and ovulation status.
+- **Quick Navigation**: Tap the date display to jump back to today instantly.
+- **Offline First**: Works entirely offline once installed. Your data stays on your device.
+- **Data Backup**: Export cycle data and goal settings as JSON, import back anytime.
+- **Modern UI**: Responsive, mobile-first design with smooth interactions.
 
 ## How It Works
 
-The app calculates your fertility status based on standard Symptothermal rules:
+The app applies standard Symptothermal rules with conservative safety margins:
 - **New Cycle**: Begins on the first day of full bleeding (Light, Medium, or Heavy).
-- **Fertile Window**: Opens when you observe fertile mucus (Cloudy/Damp or Clear/Slippery).
-- **3-Day Rule**: The fertile window stays open for 3 full days after the last observation of fertile mucus.
+- **Fertile Window**: Opens when fertile mucus is observed (Cloudy/Damp or Clear/Slippery).
+- **3-Day Rule**: The fertile window remains open for 3 full days after the last observation of fertile mucus.
+- **Dry Day Rules**: Pre-ovulation low fertility requires 3 consecutive dry days after your period ends, with no fertile mucus in the last 5 days. The Doering Rule (shortest cycle - 20) further restricts early-cycle assumptions.
+- **Evening Assessment**: Cervical mucus should be assessed after 5pm for the most accurate daily reading.
 - **Ovulation Confirmation**: Identified by a temperature shift (3 consecutive days of BBT that are at least 0.2°C higher than the highest of the previous 6 days).
 
 ## Running Locally
