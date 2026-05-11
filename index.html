@@ -50,7 +50,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="bbtInput">Basal Body Temperature (BBT) °C</label>
+                    <label for="bbtInput">Basal Body Temperature (BBT) °C (take immediately on waking)</label>
                     <input type="number" id="bbtInput" step="0.01" min="35.00" max="40.00" placeholder="e.g. 36.50">
                 </div>
 
@@ -127,6 +127,13 @@
                     <button type="button" class="option-btn" data-value="conceive">Conceive</button>
                 </div>
             </div>
+            <div class="form-group">
+                <label>Pregnancy Mode</label>
+                <div class="btn-group" id="pregnantGroup">
+                    <button type="button" class="option-btn active" data-value="false">Not Pregnant</button>
+                    <button type="button" class="option-btn" data-value="true">Pregnant</button>
+                </div>
+            </div>
             <h3 style="margin-top: 1.5rem;">Data Backup</h3>
             <div class="settings-actions">
                 <button type="button" id="exportBtn" class="option-btn">Export Data</button>
@@ -168,6 +175,10 @@
             <details class="faq-item">
                 <summary class="faq-question">What if I don't track my temperature (BBT)?</summary>
                 <p class="faq-answer">Cycle Tracker requires a temperature shift to confirm ovulation. Without temperature data, the app can still identify pre-ovulation low fertility through dry day rules, but you will not enter the confirmed post-ovulation phase without BBT data.</p>
+            </details>
+            <details class="faq-item">
+                <summary class="faq-question">What happens when I enable Pregnancy Mode?</summary>
+                <p class="faq-answer">When you enable Pregnancy Mode, fertility tracking pauses. The app calculates your due date from your last period start (280 days) and displays weeks pregnant, due date, and countdown instead of fertility status. Fertility stats are hidden until you disable Pregnancy Mode.</p>
             </details>
         </section>
     </main>

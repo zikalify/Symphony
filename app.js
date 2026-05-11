@@ -11,8 +11,10 @@ if ('serviceWorker' in navigator) {
 let currentDate = new Date();
 const STORAGE_KEY = 'cycletracker_nfp_data';
 const GOAL_KEY = 'cycletracker_goal';
+const PREGNANT_KEY = 'cycletracker_pregnant';
 let cycleData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
 let userGoal = localStorage.getItem(GOAL_KEY) || 'avoid';
+let isPregnant = localStorage.getItem(PREGNANT_KEY) === 'true';
 
 // --- DOM Elements ---
 const currentDateDisplay = document.getElementById('currentDateDisplay');
@@ -24,6 +26,7 @@ const bleedingGroup = document.getElementById('bleedingGroup');
 const mucusGroup = document.getElementById('mucusGroup');
 const goalGroup = document.getElementById('goalGroup');
 const sexGroup = document.getElementById('sexGroup');
+const pregnantGroup = document.getElementById('pregnantGroup');
 const bbtInput = document.getElementById('bbtInput');
 const insightMessage = document.getElementById('insightMessage');
 const fertilityStatus = document.getElementById('fertilityStatus');
@@ -46,12 +49,17 @@ function init() {
     updateDateDisplay();
     loadDailyData();
     loadGoalSetting();
+    loadPregnantSetting();
     analyzeCycle();
     setupEventListeners();
 }
 
 function loadGoalSetting() {
     setButtonGroupValue(goalGroup, userGoal);
+}
+
+function loadPregnantSetting() {
+    setButtonGroupValue(pregnantGroup, String(isPregnant));
 }
 
 function formatDateKey(date) {
@@ -118,6 +126,17 @@ function setupEventListeners() {
         btn.addEventListener('click', () => {
             userGoal = getButtonGroupValue(goalGroup);
             localStorage.setItem(GOAL_KEY, userGoal);
+            analyzeCycle();
+        });
+    });
+
+    // Pregnant change listener
+    setupButtonGroup(pregnantGroup);
+    const pregnantButtons = pregnantGroup.querySelectorAll('.option-btn');
+    pregnantButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            isPregnant = getButtonGroupValue(pregnantGroup) === 'true';
+            localStorage.setItem(PREGNANT_KEY, String(isPregnant));
             analyzeCycle();
         });
     });
@@ -345,6 +364,39 @@ function analyzeCycle() {
 
     if (validDates.length === 0) {
         setInsight("No Past Data", "No history available prior to this date.", "var(--unknown)", "-", "-", "", { avg: null, shortest: null }, "-", "-", 0, "-", "-");
+        return;
+    }
+
+    // Pregnancy mode: show pregnancy info instead of fertility status
+    if (isPregnant) {
+        // Find the last period start (cycleStartKey) to calculate due date
+        let cycleStartKey = null;
+        for (let i = validDates.length - 1; i >= 0; i--) {
+            const dateKey = validDates[i];
+            const data = cycleData[dateKey];
+            if (['light', 'medium', 'heavy'].includes(data?.bleeding)) {
+                cycleStartKey = dateKey;
+                break;
+            }
+        }
+
+        if (cycleStartKey) {
+            const startDate = new Date(cycleStartKey);
+            const dueDate = new Date(startDate.getTime() + 280 * 24 * 60 * 60 * 1000);
+            const currentMs = currentDate.getTime();
+            const daysPregnant = Math.floor((currentMs - startDate.getTime()) / (1000 * 60 * 60 * 24));
+            const weeksPregnant = Math.floor(daysPregnant / 7);
+            const daysIntoWeek = daysPregnant % 7;
+
+            const dueDateStr = dueDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            const weeksText = `${weeksPregnant}w ${daysIntoWeek}d`;
+            const daysUntilDue = Math.floor((dueDate.getTime() - currentMs) / (1000 * 60 * 60 * 24));
+            const dueText = daysUntilDue > 0 ? `${daysUntilDue}d left` : "Due today";
+
+            setInsight("Pregnant", `Week ${weeksText}. Due ${dueDateStr}.`, "#e91e63", weeksText, "Pregnancy", "", { avg: null, shortest: null }, dueText, "-", 0, "-", "-");
+        } else {
+            setInsight("Pregnant", "Log your last period start date to calculate due date.", "#e91e63", "-", "Pregnancy", "", { avg: null, shortest: null }, "-", "-", 0, "-", "-");
+        }
         return;
     }
 
@@ -579,7 +631,7 @@ function analyzeCycle() {
     const fertileSexText = fertileDays > 0 ? `${sexOnFertileDays}/${fertileDays}` : "-";
 
     // Pregnancy possibility status (qualitative, grounded in necessary conditions)
-    let pregnancyText = "-";
+    let pregnancyText = "Unknown";
     if (ovulationConfirmed) {
         pregnancyText = sexCount > 0 ? "Possible" : "No sex";
         
@@ -671,7 +723,8 @@ function setInsight(statusLabel, message, colorCode, dayLabel, phaseLabel, sexRe
 function exportData() {
     const exportObj = {
         cycleData: cycleData,
-        goal: userGoal
+        goal: userGoal,
+        pregnant: isPregnant
     };
     const dataStr = JSON.stringify(exportObj, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
@@ -708,6 +761,12 @@ function importData(event) {
                     userGoal = importedObj.goal;
                     localStorage.setItem(GOAL_KEY, userGoal);
                     setButtonGroupValue(goalGroup, userGoal);
+                }
+                // Restore pregnant status if present
+                if ('pregnant' in importedObj) {
+                    isPregnant = importedObj.pregnant;
+                    localStorage.setItem(PREGNANT_KEY, String(isPregnant));
+                    setButtonGroupValue(pregnantGroup, String(isPregnant));
                 }
             }
 

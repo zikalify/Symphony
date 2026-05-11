@@ -10,6 +10,7 @@ Cycle Tracker is a privacy-first, offline-capable Progressive Web App (PWA) desi
   - **Cervical Mucus (assess after 5pm)**: Track what you observe (see) and feel (sensation). Log None/Dry, Cloudy/Damp, or Clear/Slippery.
   - **Unprotected Sex**: Log whether unprotected intercourse occurred (for conception tracking and intercourse timing analysis).
 - **Goal Setting**: Choose whether you're trying to **Avoid Pregnancy** or **Conceive**. The app provides concise sex recommendations based on your goal and current fertility status. For conception, it suggests every-other-day intercourse during fertile windows to optimize sperm quality.
+- **Pregnancy Mode**: When you become pregnant, enable Pregnancy Mode to pause fertility tracking. The app will display your due date, weeks pregnant, and countdown to due date instead of fertility status.
 - **Fertility Insights with Color Coding**:
   - **Green** - High Fertility (peak mucus or within 3-day window)
   - **Amber** - Potentially Fertile (non-peak mucus, pre-ovulation, or bleeding)
