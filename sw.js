@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cycletracker-v32';
+const CACHE_NAME = 'cycletracker-v33';
 const ASSETS = [
     './',
     './index.html',

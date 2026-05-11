@@ -661,18 +661,18 @@ function analyzeCycle() {
     if (userGoal === 'conceive') {
         if (isFertileWindow) {
             if (hadSexYesterday) {
-                sexRec = "Rest today, had sex yesterday.";
+                sexRec = "Rest today, had unprotected sex yesterday.";
             } else {
-                sexRec = "Have sex today.";
+                sexRec = "Have unprotected sex today.";
             }
         } else if (isLowFertility) {
             sexRec = "Low chance of conception.";
         }
     } else {
         if (isFertileWindow) {
-            sexRec = "Avoid sex today.";
+            sexRec = "Avoid unprotected sex today.";
         } else if (isLowFertility) {
-            sexRec = "Safe to have sex.";
+            sexRec = "Safe to have unprotected sex.";
         }
     }
 
