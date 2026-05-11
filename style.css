@@ -8,7 +8,8 @@
     --border: #e9ecef;
     
     --fertile-high: #83c5be;
-    --fertile-low: #edc4b3;
+    --fertile-moderate: #f5a623;
+    --fertile-low: #5b9bd5;
     --period: #e29578;
     --unknown: #e9ecef;
     
@@ -29,7 +30,8 @@ header { padding: 2rem 1.5rem 1.5rem; background: var(--card-bg); border-bottom-
 .calendar-nav button { background: none; border: none; font-size: 1.2rem; font-weight: 600; padding: 0.5rem 1rem; cursor: pointer; color: var(--text-main); transition: var(--transition); border-radius: 8px; }
 .calendar-nav button:hover:not(:disabled) { background: var(--primary-light); color: var(--text-main); }
 .calendar-nav button:disabled { color: var(--border); cursor: not-allowed; opacity: 0.5; }
-.calendar-nav h2 { font-size: 1.1rem; font-weight: 500; }
+.calendar-nav h2 { font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: var(--transition); border-radius: 8px; padding: 0.5rem 1rem; }
+.calendar-nav h2:hover { background: var(--primary-light); }
 
 main { padding: 0 1.5rem; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
 
@@ -87,7 +89,8 @@ main { padding: 0 1.5rem; max-width: 600px; margin: 0 auto; display: flex; flex-
         --border: #333333;
         
         --fertile-high: #3a7a73;
-        --fertile-low: #805c4d;
+        --fertile-moderate: #b8860b;
+        --fertile-low: #3a6b9e;
         --period: #8c4e36;
         --unknown: #333333;
         

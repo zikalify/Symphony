@@ -76,6 +76,11 @@ function setupEventListeners() {
         }
     });
 
+    currentDateDisplay.addEventListener('click', () => {
+        currentDate = new Date();
+        handleDateChange();
+    });
+
     // Custom Button Groups logic
     setupButtonGroup(bleedingGroup);
     setupButtonGroup(mucusGroup);
@@ -293,6 +298,38 @@ function analyzeCycle() {
         if (diffDays <= 3) isPotentiallyFertile = true;
     }
 
+    // Check for consecutive dry days after period ends (early dry days)
+    let consecutiveDryDays = 0;
+    let isEarlyDryPhase = false;
+    
+    if (cycleStartKey && !isHighlyFertile && !isPotentiallyFertile) {
+        // Count consecutive dry days backwards from current date
+        for (let i = datesUpToCurrent.length - 1; i >= 0; i--) {
+            const dateKey = datesUpToCurrent[i];
+            const data = cycleData[dateKey];
+            const isBleeding = ['light', 'medium', 'heavy', 'spotting'].includes(data.bleeding);
+            
+            if (isBleeding) {
+                break; // Stop counting when we hit bleeding
+            }
+            
+            if (data.mucus === 'dry') {
+                consecutiveDryDays++;
+            } else if (data.mucus === 'damp' || data.mucus === 'slippery') {
+                break; // Stop if we hit fertile mucus
+            }
+            // If mucus is 'unknown', we don't count it but don't break either
+        }
+        
+        // Early dry phase: at least 3 consecutive dry days, cycle day 6-12, no fertile mucus recently
+        const hasRecentFertileMucus = (lastSlipperyKey && daysSince(lastSlipperyKey) <= 5) ||
+                                      (lastDampKey && daysSince(lastDampKey) <= 5);
+        
+        if (consecutiveDryDays >= 3 && cycleDay >= 6 && cycleDay <= 12 && !hasRecentFertileMucus) {
+            isEarlyDryPhase = true;
+        }
+    }
+
     // Determine Phase and Status
     let phase = "-";
     let statusText = "";
@@ -303,52 +340,50 @@ function analyzeCycle() {
 
     if (isHighlyFertile) {
         phase = cycleStartKey ? "Follicular Phase" : "Unknown Phase";
-        statusText = "High Fertility (Peak)";
+        statusText = "High Fertility";
         color = "var(--fertile-high)";
-        message = `High probability of fertility: Peak-type mucus detected (or within 3-day count).`;
+        message = "Peak fertility detected.";
     } else if (isPotentiallyFertile) {
         phase = cycleStartKey ? "Follicular Phase" : "Unknown Phase";
         statusText = "Potentially Fertile";
-        color = "var(--fertile-high)";
-        message = `Moderate probability of fertility: Non-peak mucus detected (or within 3-day count).`;
+        color = "var(--fertile-moderate)";
+        message = "Fertility signs present.";
+    } else if (isEarlyDryPhase) {
+        phase = "Follicular Phase";
+        statusText = "Low Fertility";
+        color = "var(--fertile-low)";
+        message = "Dry days detected.";
     } else if (ovulationConfirmed) {
         phase = "Luteal Phase";
-        statusText = "Low Fertility (Post-Ovulation)";
+        statusText = "Low Fertility";
         color = "var(--fertile-low)";
-        message = `Probability of fertility is very low: Temperature shift and mucus dry-up confirmed.`;
+        message = "Ovulation confirmed.";
     } else if (isBleeding && cycleDay <= 5) {
         phase = "Menstruation";
-        statusText = "Typically Low Fertility (Period)";
+        statusText = "Low Fertility";
         color = "var(--period)";
-        message = `Fertility is typically low during early menstruation, but assume potential fertility if your cycles are short (Day 1-5).`;
+        message = "Menstruation.";
     } else if (isBleeding && cycleDay > 5) {
         phase = "Follicular Phase";
-        statusText = "Potentially Fertile (Bleeding)";
+        statusText = "Potentially Fertile";
         color = "var(--unknown)";
-        message = `You are potentially fertile: Late bleeding/spotting occurs closer to ovulation.`;
+        message = "Bleeding detected.";
     } else {
         if (!cycleStartKey) {
             phase = "Unknown Phase";
-            statusText = "Potentially Fertile (Unknown)";
+            statusText = "Unknown";
             color = "var(--unknown)";
-            message = "Insufficient data to determine cycle phase. Please assume you are potentially fertile to be safe.";
-            if (todayData.bleeding === 'none' && todayData.mucus === 'unknown') {
-                message += " Missing mucus data - accuracy may be reduced.";
-            }
+            message = "Log more data.";;
             if (todayData.mucus === 'dry') {
-                message += " Low fertility is only assumed during the evening hours, provided no mucus was detected during any point of the day.";
+                message += " Dry mucus detected.";
             }
         } else {
             phase = "Follicular Phase";
-            statusText = "Potentially Fertile (Pre-Ovulatory)";
+            statusText = "Potentially Fertile";
             color = "var(--unknown)";
-            message = `Assume potential fertility. Keep logging daily to detect your fertile window and confirm ovulation.`;
-            
-            if (todayData.bleeding === 'none' && todayData.mucus === 'unknown') {
-                message += " Missing mucus data - accuracy may be reduced.";
-            }
+            message = "Keep logging daily.";
             if (todayData.mucus === 'dry') {
-                message += " Low fertility is only assumed during the evening hours, provided no mucus was detected during any point of the day.";
+                message += " Dry mucus detected.";
             }
         }
     }
