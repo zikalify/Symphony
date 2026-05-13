@@ -377,12 +377,22 @@ function analyzeCycle() {
     // Pregnancy mode: show pregnancy info instead of fertility status
     if (isPregnant) {
         // Find the last period start (cycleStartKey) to calculate due date
+        // Use the same logic as regular cycle detection to find first day of contiguous bleeding
         let cycleStartKey = null;
+        let isPeriodContext = false;
+
         for (let i = validDates.length - 1; i >= 0; i--) {
             const dateKey = validDates[i];
             const data = cycleData[dateKey];
-            if (['light', 'medium', 'heavy'].includes(data?.bleeding)) {
-                cycleStartKey = dateKey;
+            const isFullBleeding = ['light', 'medium', 'heavy'].includes(data.bleeding);
+            const isSpotting = data.bleeding === 'spotting';
+
+            if (isFullBleeding) {
+                isPeriodContext = true;
+                cycleStartKey = dateKey; // Keep shifting backwards while bleeding is contiguous to find day 1
+            } else if (isSpotting && isPeriodContext) {
+                break; // Spotting typically doesn't count as contiguous full flow Day 1
+            } else if (isPeriodContext) {
                 break;
             }
         }
