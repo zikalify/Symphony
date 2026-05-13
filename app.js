@@ -335,8 +335,24 @@ function getCycleStats() {
         const isFullBleeding = ['light', 'medium', 'heavy'].includes(data.bleeding);
         const wasBleeding = prevData && ['light', 'medium', 'heavy'].includes(prevData.bleeding);
         
-        if (isFullBleeding && !wasBleeding) {
-            cycleStarts.push(new Date(dateKey).getTime());
+        if (isFullBleeding) {
+            let isCycleStart = false;
+            
+            if (!wasBleeding) {
+                // Transition from non-bleeding to bleeding
+                isCycleStart = true;
+            } else if (prevDate) {
+                // Check for a gap in logging (unlogged days between entries)
+                const daysSinceLastLog = Math.floor((new Date(dateKey) - new Date(prevDate)) / (1000 * 60 * 60 * 24));
+                if (daysSinceLastLog > 10) {
+                    // Large gap suggests a new cycle (accounts for sparse data entry)
+                    isCycleStart = true;
+                }
+            }
+            
+            if (isCycleStart) {
+                cycleStarts.push(new Date(dateKey).getTime());
+            }
         }
     }
     
