@@ -401,7 +401,7 @@ function analyzeCycle() {
             const startDate = new Date(cycleStartKey);
             const dueDate = new Date(startDate.getTime() + 280 * 24 * 60 * 60 * 1000);
             const currentMs = currentDate.getTime();
-            const daysPregnant = Math.floor((currentMs - startDate.getTime()) / (1000 * 60 * 60 * 24));
+            const daysPregnant = Math.floor((currentMs - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
             const weeksPregnant = Math.floor(daysPregnant / 7);
             const daysIntoWeek = daysPregnant % 7;
 
@@ -410,7 +410,7 @@ function analyzeCycle() {
             const daysUntilDue = Math.floor((dueDate.getTime() - currentMs) / (1000 * 60 * 60 * 24));
             const dueText = daysUntilDue > 0 ? `${daysUntilDue}d left` : "Due today";
 
-            setInsight("Pregnant", `Week ${weeksText}. Due ${dueDateStr}.`, "#e91e63", weeksText, "Pregnancy", "", { median: null, shortest: null }, dueText, "-", 0, "-", "-");
+            setInsight("Pregnant", `Week ${weeksText}. Due ${dueDateStr}.`, "#e91e63", weeksText, "Pregnancy", "", { median: null, shortest: null }, "Pregnancy", "-", 0, "-", "-");
         } else {
             setInsight("Pregnant", "Log your last period start date to calculate due date.", "#e91e63", "-", "Pregnancy", "", { median: null, shortest: null }, "-", "-", 0, "-", "-");
         }
