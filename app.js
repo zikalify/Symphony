@@ -35,7 +35,6 @@ const cycleDayDisplay = document.getElementById('cycleDayDisplay');
 const cycleDayLabel = document.getElementById('cycleDayLabel');
 const cyclePhaseDisplay = document.getElementById('cyclePhaseDisplay');
 const avgCycleDisplay = document.getElementById('avgCycleDisplay');
-const shortestCycleDisplay = document.getElementById('shortestCycleDisplay');
 const nextPeriodDisplay = document.getElementById('nextPeriodDisplay');
 const nextPeriodLabel = document.getElementById('nextPeriodLabel');
 const ovulationDisplay = document.getElementById('ovulationDisplay');
@@ -757,7 +756,6 @@ function setInsight(statusLabel, message, colorCode, dayLabel, phaseLabel, sexRe
     cycleDayDisplay.textContent = dayLabel;
     cyclePhaseDisplay.textContent = phaseLabel;
     avgCycleDisplay.textContent = cycleStats.median || "-";
-    shortestCycleDisplay.textContent = cycleStats.shortest || "-";
     nextPeriodDisplay.textContent = nextPeriodText;
     ovulationDisplay.textContent = ovulationText;
     sexCountDisplay.textContent = sexCount;
