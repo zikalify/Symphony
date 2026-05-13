@@ -36,6 +36,7 @@ const cyclePhaseDisplay = document.getElementById('cyclePhaseDisplay');
 const avgCycleDisplay = document.getElementById('avgCycleDisplay');
 const shortestCycleDisplay = document.getElementById('shortestCycleDisplay');
 const nextPeriodDisplay = document.getElementById('nextPeriodDisplay');
+const nextPeriodLabel = document.getElementById('nextPeriodLabel');
 const ovulationDisplay = document.getElementById('ovulationDisplay');
 const sexCountDisplay = document.getElementById('sexCountDisplay');
 const pregnancyDisplay = document.getElementById('pregnancyDisplay');
@@ -408,14 +409,19 @@ function analyzeCycle() {
             const dueDateStr = dueDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
             const weeksText = `${weeksPregnant}w ${daysIntoWeek}d`;
             const daysUntilDue = Math.floor((dueDate.getTime() - currentMs) / (1000 * 60 * 60 * 24));
-            const dueText = daysUntilDue > 0 ? `${daysUntilDue}d left` : "Due today";
+            const dueText = daysUntilDue > 0 ? `in ${daysUntilDue} days` : "Due today";
 
-            setInsight("Pregnant", `Week ${weeksText}. Due ${dueDateStr}.`, "#e91e63", weeksText, "Pregnancy", "", { median: null, shortest: null }, "Pregnancy", "-", 0, "-", "-");
+            nextPeriodLabel.textContent = "Giving Birth";
+            setInsight("Pregnant", `Week ${weeksText}. Due ${dueDateStr}.`, "#e91e63", weeksText, "Pregnancy", "", { median: null, shortest: null }, dueText, "-", 0, "-", "-");
         } else {
+            nextPeriodLabel.textContent = "Giving Birth";
             setInsight("Pregnant", "Log your last period start date to calculate due date.", "#e91e63", "-", "Pregnancy", "", { median: null, shortest: null }, "-", "-", 0, "-", "-");
         }
         return;
     }
+
+    // Reset label for non-pregnancy mode
+    nextPeriodLabel.textContent = "Next Period";
 
     // 1. Find the start of the current cycle (most recent period start relative to the viewed date)
     let cycleStartKey = null;
