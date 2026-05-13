@@ -32,6 +32,7 @@ const insightMessage = document.getElementById('insightMessage');
 const fertilityStatus = document.getElementById('fertilityStatus');
 const fertilityIndicator = document.getElementById('fertilityIndicator');
 const cycleDayDisplay = document.getElementById('cycleDayDisplay');
+const cycleDayLabel = document.getElementById('cycleDayLabel');
 const cyclePhaseDisplay = document.getElementById('cyclePhaseDisplay');
 const avgCycleDisplay = document.getElementById('avgCycleDisplay');
 const shortestCycleDisplay = document.getElementById('shortestCycleDisplay');
@@ -411,16 +412,19 @@ function analyzeCycle() {
             const daysUntilDue = Math.floor((dueDate.getTime() - currentMs) / (1000 * 60 * 60 * 24));
             const dueText = daysUntilDue > 0 ? `in ${daysUntilDue} days` : "Due today";
 
+            cycleDayLabel.textContent = "Weeks Pregnant";
             nextPeriodLabel.textContent = "Giving Birth";
             setInsight("Pregnant", `Week ${weeksText}. Due ${dueDateStr}.`, "#e91e63", weeksText, "Pregnancy", "", { median: null, shortest: null }, dueText, "-", 0, "-", "-");
         } else {
+            cycleDayLabel.textContent = "Weeks Pregnant";
             nextPeriodLabel.textContent = "Giving Birth";
             setInsight("Pregnant", "Log your last period start date to calculate due date.", "#e91e63", "-", "Pregnancy", "", { median: null, shortest: null }, "-", "-", 0, "-", "-");
         }
         return;
     }
 
-    // Reset label for non-pregnancy mode
+    // Reset labels for non-pregnancy mode
+    cycleDayLabel.textContent = "Cycle Day";
     nextPeriodLabel.textContent = "Next Period";
 
     // 1. Find the start of the current cycle (most recent period start relative to the viewed date)
