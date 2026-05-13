@@ -623,12 +623,11 @@ function analyzeCycle() {
         ovulationText = "Confirmed";
     } else if (cycleStartKey && cycleStats.median) {
         const estimatedOvDay = cycleStats.median - 14;
-        if (typeof cycleDay === 'number') {
-            if (cycleDay < estimatedOvDay) {
-                ovulationText = `Day ~${estimatedOvDay}`;
-            } else if (cycleDay >= estimatedOvDay && cycleDay <= estimatedOvDay + 2) {
-                ovulationText = "Expected now";
-            }
+        const startDate = new Date(cycleStartKey);
+        const estimatedOvulation = new Date(startDate.getTime() + estimatedOvDay * 24 * 60 * 60 * 1000);
+        const daysUntilOv = Math.floor((estimatedOvulation.getTime() - currentMs) / (1000 * 60 * 60 * 24));
+        if (daysUntilOv >= 0) {
+            ovulationText = daysUntilOv === 0 ? "Today" : `In ${daysUntilOv}d`;
         }
     }
     
