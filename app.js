@@ -543,7 +543,8 @@ function analyzeCycle() {
         
         // Doering Rule: use shortest cycle - 20 as earliest possible ovulation cutoff
         const doeringCutoff = getDoeringCutoff();
-        const beforeDoeringCutoff = doeringCutoff === null || cycleDay < doeringCutoff;
+        // If history is missing (null), do NOT allow extension of early infertile days beyond day 5.
+        const beforeDoeringCutoff = doeringCutoff !== null && cycleDay < doeringCutoff;
         
         // STM dry day rule: 3+ consecutive dry days after period, today must be dry, before Doering cutoff
         if (todayData.mucus === 'dry' && consecutiveDryDays >= 3 && cycleDay >= 6 && !hasRecentFertileMucus && beforeDoeringCutoff) {
@@ -559,7 +560,18 @@ function analyzeCycle() {
 
     const isBleeding = ['light', 'medium', 'heavy', 'spotting'].includes(todayData.bleeding);
 
-    if (isHighlyFertile) {
+    if (isBleeding && cycleDay <= 5) {
+        phase = "Menstruation";
+        statusText = "Low Fertility";
+        color = "var(--period)";
+        message = "Menstruation.";
+    } else if (isBleeding && cycleDay > 5) {
+        // Continue menstruation beyond typical 5 days; still low fertility per STM guidelines.
+        phase = "Menstruation";
+        statusText = "Low Fertility";
+        color = "var(--period)";
+        message = "Menstruation (continued).";
+    } else if (isHighlyFertile) {
         phase = cycleStartKey ? "Follicular Phase" : "Unknown Phase";
         statusText = "High Fertility";
         color = "var(--fertile-high)";
@@ -579,16 +591,7 @@ function analyzeCycle() {
         statusText = "Low Fertility";
         color = "var(--fertile-low)";
         message = "Ovulation confirmed.";
-    } else if (isBleeding && cycleDay <= 5) {
-        phase = "Menstruation";
-        statusText = "Low Fertility";
-        color = "var(--period)";
-        message = "Menstruation.";
-    } else if (isBleeding && cycleDay > 5) {
-        phase = "Follicular Phase";
-        statusText = "Potentially Fertile";
-        color = "var(--fertile-moderate)";
-        message = "Bleeding.";
+
     } else {
         if (!cycleStartKey) {
             phase = "Unknown Phase";
@@ -718,26 +721,31 @@ function analyzeCycle() {
 
 // 3-over-6 rule: 3 days of temps >= 0.2C above the highest of the previous 6 days, tolerant of missing days
 function checkBBTShift(dates) {
-    const recentDates = dates.slice(-14);
-    const validTemps = recentDates.map(d => ({ date: d, temp: cycleData[d].bbt })).filter(item => item.temp !== null && !isNaN(item.temp));
+    const validTemps = dates.map(d => ({ date: d, temp: cycleData[d].bbt })).filter(item => item.temp !== null && !isNaN(item.temp));
 
     if (validTemps.length < 9) return false;
 
-    // Look at the last 3 valid temps
-    const last3 = validTemps.slice(-3);
-    const prev6 = validTemps.slice(-9, -3);
+    // Scan through the cycle to find if a shift occurred AT ANY POINT
+    for (let i = 6; i <= validTemps.length - 3; i++) {
+        const prev6 = validTemps.slice(i - 6, i);
+        const post3 = validTemps.slice(i, i + 3);
 
-    const highestPrev6 = Math.max(...prev6.map(item => item.temp));
-    const threshold = highestPrev6 + 0.2;
+        const highestPrev6 = Math.max(...prev6.map(item => item.temp));
+        const threshold = highestPrev6 + 0.2;
 
-    const isShiftConfirmed = last3.every(item => item.temp >= threshold);
+        const isShift = post3.every(item => item.temp >= threshold);
 
-    // Realism check: ensure shift is reasonable (e.g., max difference not > 2.0C to avoid garbage data)
-    const lowestPrev6 = Math.min(...prev6.map(item => item.temp));
-    const highestLast3 = Math.max(...last3.map(item => item.temp));
-    if (highestLast3 - lowestPrev6 > 2.0) return false; // Likely invalid data (e.g. fever or typo)
+        // Realism check: ensure shift is reasonable (e.g., max difference not > 2.0C to avoid garbage data)
+        const lowestPrev6 = Math.min(...prev6.map(item => item.temp));
+        const highestPost3 = Math.max(...post3.map(item => item.temp));
+        const isRealistic = (highestPost3 - lowestPrev6) <= 2.0;
 
-    return isShiftConfirmed;
+        if (isShift && isRealistic) {
+            return true; // Shift was found and remains confirmed for the rest of the cycle
+        }
+    }
+
+    return false;
 }
 
 function setInsight(statusLabel, message, colorCode, dayLabel, phaseLabel, sexRec, cycleStats, nextPeriodText, ovulationText, sexCount, pregnancyText, fertileSexText) {
