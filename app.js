@@ -570,7 +570,7 @@ function analyzeCycle() {
         phase = "Menstruation";
         statusText = "Low Fertility";
         color = "var(--period)";
-        message = "Menstruation (continued).";
+        message = "Menstruation.";
     } else if (isHighlyFertile) {
         phase = cycleStartKey ? "Follicular Phase" : "Unknown Phase";
         statusText = "High Fertility";
